@@ -16,6 +16,13 @@ export default async function ProtectedPage() {
     return redirect("/login");
   }
 
+  const { data: claims, error } = await supabase.from("claims").select("*");
+
+  if (error) {
+    console.error("Error fetching claims:", error);
+    return <div>Error fetching claims data</div>;
+  }
+
   return (
     <div className="flex-1 w-full flex flex-col gap-20 items-center">
       <div className="w-full">
@@ -34,8 +41,36 @@ export default async function ProtectedPage() {
       <div className="flex-1 flex flex-col gap-20 max-w-4xl px-3">
         <Header />
         <main className="flex-1 flex flex-col gap-6">
-          <h2 className="font-bold text-4xl mb-4">Next steps</h2>
-          <FetchDataSteps />
+          <h2 className="font-bold text-4xl mb-4">Claims Data</h2>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                {claims.length > 0 &&
+                  Object.keys(claims[0]).map((key) => (
+                    <th
+                      key={key}
+                      className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {key}
+                    </th>
+                  ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {claims.map((claim) => (
+                <tr key={claim.id}>
+                  {Object.values(claim).map((value, index) => (
+                    <td
+                      key={index}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    >
+                      {value}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </main>
       </div>
 
