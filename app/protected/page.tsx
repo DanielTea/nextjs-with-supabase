@@ -45,7 +45,7 @@ export default async function ProtectedPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>
-                {claims.length > 0 &&
+                {claims && claims.length > 0 &&
                   Object.keys(claims[0]).map((key) => (
                     <th
                       key={key}
@@ -57,14 +57,14 @@ export default async function ProtectedPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {claims.map((claim) => (
+              {claims && claims.map((claim) => (
                 <tr key={claim.id}>
                   {Object.values(claim).map((value, index) => (
                     <td
                       key={index}
                       className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
                     >
-                      {value}
+                      {String(value)}
                     </td>
                   ))}
                 </tr>
