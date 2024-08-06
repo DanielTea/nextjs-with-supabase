@@ -1,39 +1,47 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import DeployButton from "@/components/DeployButton";
 import AuthButton from "@/components/AuthButton";
 import { createClient } from "@/utils/supabase/server";
 import FetchDataSteps from "@/components/tutorial/FetchDataSteps";
 import Header from "@/components/Header";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-// Helper function to create Supabase client
-const getClient = () => createClient();
+export default function ProtectedPage() {
+  const [claims, setClaims] = useState([]);
+  const [userProfiles, setUserProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-export default async function ProtectedPage() {
-  const supabase = getClient();
+  useEffect(() => {
+    const fetchData = async () => {
+      const supabase = createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  if (!user) {
-    return redirect("/login");
-  }
+      if (!user) {
+        router.push("/login");
+        return;
+      }
 
-  const { data: claims, error: claimsError } = await supabase.from("claims").select("*");
-  const { data: userProfiles, error: userProfilesError } = await supabase.from("user_profiles").select("*");
+      const { data: claimsData, error: claimsError } = await supabase.from("claims").select("*");
+      const { data: userProfilesData, error: userProfilesError } = await supabase.from("user_profiles").select("*");
 
-  if (claimsError || userProfilesError) {
-    console.error("Error fetching data:", claimsError || userProfilesError);
-    return <div>Error fetching data</div>;
-  }
+      if (claimsError || userProfilesError) {
+        console.error("Error fetching data:", claimsError || userProfilesError);
+        return;
+      }
 
-  return <EditableTables initialClaims={claims} initialUserProfiles={userProfiles} />;
-}
+      setClaims(claimsData);
+      setUserProfiles(userProfilesData);
+      setLoading(false);
+    };
 
-function EditableTables({ initialClaims, initialUserProfiles }) {
-  const [claims, setClaims] = useState(initialClaims);
-  const [userProfiles, setUserProfiles] = useState(initialUserProfiles);
+    fetchData();
+  }, [router]);
 
   const handleInputChange = (e, table, index, key) => {
     const value = e.target.value;
@@ -49,7 +57,7 @@ function EditableTables({ initialClaims, initialUserProfiles }) {
   };
 
   const saveChanges = async (table) => {
-    const supabase = getClient();
+    const supabase = createClient();
     if (table === "claims") {
       const { error } = await supabase.from("claims").upsert(claims);
       if (error) {
@@ -62,6 +70,10 @@ function EditableTables({ initialClaims, initialUserProfiles }) {
       }
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="flex-1 w-full flex flex-col gap-10 items-center">
